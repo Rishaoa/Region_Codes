@@ -1,0 +1,122 @@
+﻿@page
+@model RegionCodeCollector.Pages.Regions.IndexModel
+
+@{
+    ViewData["Title"] = "Справочник автомобильных кодов";
+}
+
+<div class="container mt-4 page-container">
+    <h1 class="mb-3">Справочник автомобильных кодов регионов</h1>
+
+    <p class="text-muted page-description">
+        На этой странице каждый автомобильный код от 01 до 99 показан отдельной строкой.
+        Если у одного региона несколько кодов в этом диапазоне, регион повторяется несколько раз.
+        <span class="mobile-only-hint">
+            На телефоне можно нажать на строку региона, чтобы открыть интересный факт.
+        </span>
+    </p>
+
+    <form method="get" class="row g-2 mb-4 search-form">
+        <div class="col-md-10">
+            <input asp-for="SearchQuery"
+                   class="form-control"
+                   placeholder="Поиск по коду, региону или административному центру" />
+        </div>
+
+        <div class="col-md-2 search-button-column">
+            <button type="submit" class="btn btn-primary search-button">
+                Найти
+            </button>
+        </div>
+    </form>
+
+    @if (Model.Regions.Count == 0)
+    {
+        <div class="alert alert-warning">
+            По выбранным условиям ничего не найдено.
+        </div>
+    }
+    else
+    {
+        <div class="app-table-wrapper">
+            <table class="table table-bordered table-hover align-middle app-table directory-table">
+                <thead class="table-light">
+                    <tr>
+                        <th class="code-column">Код</th>
+                        <th>Регион</th>
+                        <th>Административный центр</th>
+                        <th>Все коды региона</th>
+                        <th class="directory-fact-column">Интересный факт</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var region in Model.Regions)
+                    {
+                        string collapseId = $"directory-fact-{region.Code}";
+
+                        <tr class="directory-main-row"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@collapseId"
+                            aria-expanded="false"
+                            aria-controls="@collapseId">
+                            <td class="code-column">
+                                <strong>@region.Code</strong>
+                            </td>
+
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(region.WikiUrl))
+                                {
+                                    <a href="@region.WikiUrl" target="_blank">
+                                        @region.RegionName
+                                    </a>
+                                }
+                                else
+                                {
+                                    @region.RegionName
+                                }
+                            </td>
+
+                            <td>
+                                @region.AdminCenter
+                            </td>
+
+                            <td>
+                                @string.Join(", ", region.AllRegionCodes)
+                            </td>
+
+                            <td class="directory-fact-column">
+                                @if (!string.IsNullOrWhiteSpace(region.InterestingFact))
+                                {
+                                    @region.InterestingFact
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+
+                        <tr class="directory-fact-row">
+                            <td colspan="4" class="directory-fact-cell">
+                                <div class="collapse" id="@collapseId">
+                                    <div class="directory-fact-card">
+                                        <strong>Интересный факт:</strong>
+                                        @if (!string.IsNullOrWhiteSpace(region.InterestingFact))
+                                        {
+                                            <span>@region.InterestingFact</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

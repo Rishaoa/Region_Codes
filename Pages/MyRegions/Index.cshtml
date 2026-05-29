@@ -1,0 +1,290 @@
+﻿@page
+@using Microsoft.AspNetCore.Http
+@model RegionCodeCollector.Pages.MyRegions.IndexModel
+
+@{
+    ViewData["Title"] = "Моя таблица регионов";
+
+    string? username = HttpContext.Session.GetString("Username");
+
+    int completedProgressPercent = Model.Progress.TotalRegions == 0
+        ? 0
+        : (int)Math.Round((double)Model.Progress.CompletedRegions / Model.Progress.TotalRegions * 100);
+}
+
+<div class="container mt-4 page-container">
+    <h1 class="mb-3 page-title-toggle"
+        data-bs-toggle="collapse"
+        data-bs-target="#myRegionsDescription"
+        aria-expanded="false"
+        aria-controls="myRegionsDescription">
+        Моя таблица регионов
+        @if (!string.IsNullOrWhiteSpace(username))
+        {
+            <span class="page-title-username">(@username)</span>
+        }
+    </h1>
+
+    <div class="collapse" id="myRegionsDescription">
+        <p class="text-muted page-description">
+            Здесь показаны автомобильные коды от 01 до 99. Если у одного региона несколько кодов
+            в этом диапазоне, регион повторяется в таблице несколько раз.
+            Нажмите на строку, чтобы раскрыть все коды региона.
+        </p>
+    </div>
+
+    <form id="antiForgeryForm" method="post" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <div class="row g-3 mb-4 stats-grid">
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 stats-card stats-toggle-card">
+                <div class="card-body">
+                    <div class="stats-card-header">
+                        <div class="fs-4 fw-bold stats-value" id="seenCodesText">
+                            @Model.Progress.SeenCodes из @Model.Progress.TotalCodes
+                        </div>
+
+                        <div class="stats-label">Отмечено кодов</div>
+                    </div>
+
+                    <div class="stats-description stats-card-description">
+                        Сколько конкретных автомобильных кодов вы уже отметили в коллекции.
+                    </div>
+
+                    <div class="progress progress-with-label mt-2">
+                        <div class="progress-bar"
+                             id="codeProgressBar"
+                             role="progressbar"
+                             data-percent="@Model.Progress.CodeProgressPercent"
+                             aria-valuemin="0"
+                             aria-valuemax="100"
+                             aria-valuenow="@Model.Progress.CodeProgressPercent">
+                        </div>
+
+                        <span class="progress-percent" id="codeProgressText">
+                            @Model.Progress.CodeProgressPercent%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 stats-card stats-toggle-card">
+                <div class="card-body">
+                    <div class="stats-card-header">
+                        <div class="fs-4 fw-bold stats-value" id="seenRegionsText">
+                            @Model.Progress.SeenRegions из @Model.Progress.TotalRegions
+                        </div>
+
+                        <div class="stats-label">Найдено регионов</div>
+                    </div>
+
+                    <div class="stats-description stats-card-description">
+                        Регион считается найденным, если отмечен хотя бы один его код.
+                    </div>
+
+                    <div class="progress progress-with-label mt-2">
+                        <div class="progress-bar"
+                             id="regionProgressBar"
+                             role="progressbar"
+                             data-percent="@Model.Progress.RegionProgressPercent"
+                             aria-valuemin="0"
+                             aria-valuemax="100"
+                             aria-valuenow="@Model.Progress.RegionProgressPercent">
+                        </div>
+
+                        <span class="progress-percent" id="regionProgressText">
+                            @Model.Progress.RegionProgressPercent%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100 stats-card stats-toggle-card">
+                <div class="card-body">
+                    <div class="stats-card-header">
+                        <div class="fs-4 fw-bold stats-value" id="completedRegionsText">
+                            @Model.Progress.CompletedRegions из @Model.Progress.TotalRegions
+                        </div>
+
+                        <div class="stats-label">Полностью собрано регионов</div>
+                    </div>
+
+                    <div class="stats-description stats-card-description">
+                        Регион полностью собран, если отмечены все его автомобильные коды.
+                    </div>
+
+                    <div class="progress progress-with-label mt-2">
+                        <div class="progress-bar"
+                             id="completedProgressBar"
+                             role="progressbar"
+                             data-percent="@completedProgressPercent"
+                             aria-valuemin="0"
+                             aria-valuemax="100"
+                             aria-valuenow="@completedProgressPercent">
+                        </div>
+
+                        <span class="progress-percent" id="completedProgressText">
+                            @completedProgressPercent%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="get" class="row g-2 mb-4 search-form">
+        <div class="col-md-6">
+            <input asp-for="SearchQuery"
+                   class="form-control"
+                   placeholder="Поиск по коду или названию региона" />
+        </div>
+
+        <div class="col-md-4">
+            <select asp-for="StatusFilter" class="form-select">
+                <option value="all">Все</option>
+                <option value="not-found">Не собранные</option>
+                <option value="partial">Частично собранные</option>
+                <option value="completed">Полностью собранные</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 search-button-column">
+            <button type="submit" class="btn btn-primary search-button">
+                Найти
+            </button>
+        </div>
+    </form>
+
+    @if (Model.Regions.Count == 0)
+    {
+        <div class="alert alert-warning">
+            По выбранным условиям ничего не найдено.
+        </div>
+    }
+    else
+    {
+        <div class="app-table-wrapper">
+            <table class="table table-bordered table-hover align-middle app-table my-regions-table">
+                <thead class="table-light">
+                    <tr>
+                        <th class="main-code-column">Код</th>
+                        <th>Регион</th>
+                        <th>Все коды региона</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var region in Model.Regions)
+                    {
+                        string collapseId = $"region-code-{region.CurrentRegionCodeId}";
+
+                        <tr class="region-main-row"
+                            data-region-id="@region.RegionId"
+                            data-collection-percent="@region.CollectionPercent"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#@collapseId"
+                            aria-expanded="false"
+                            aria-controls="@collapseId">
+
+                            <td class="main-code-column">
+                                <strong>@region.Code</strong>
+                            </td>
+
+                            <td>
+                                @region.RegionName
+                            </td>
+
+                            <td>
+                                @string.Join(", ", region.AllRegionCodes)
+                            </td>
+                        </tr>
+
+                        <tr class="region-details-row">
+                            <td colspan="3" class="region-details-cell">
+                                <div class="collapse region-collapse" id="@collapseId">
+                                    <div class="region-details-card">
+                                        <div class="app-table-wrapper inner-table-wrapper">
+                                            <table class="table table-sm table-bordered mb-0 bg-white app-table codes-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="compact-column code-column">Код</th>
+                                                        <th class="compact-column check-column">
+                                                            <span class="visually-hidden">Отметка</span>
+                                                        </th>
+                                                        <th class="compact-column date-column">Дата</th>
+                                                        <th class="note-column">Заметка</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    @foreach (var code in region.Codes)
+                                                    {
+                                                        <tr>
+                                                            <td class="compact-column code-column">
+                                                                <strong>@code.Code</strong>
+                                                            </td>
+
+                                                            <td class="compact-column check-column">
+                                                                <input class="form-check-input code-checkbox"
+                                                                       type="checkbox"
+                                                                       data-region-code-id="@code.RegionCodeId"
+                                                                       data-region-id="@region.RegionId"
+                                                                       checked="@code.IsSeen" />
+                                                            </td>
+
+                                                            <td class="compact-column date-column">
+                                                                <span class="code-date @(code.SeenAt.HasValue ? "" : "text-muted")"
+                                                                      data-region-code-id="@code.RegionCodeId">
+                                                                    @if (code.SeenAt.HasValue)
+                                                                    {
+                                                                        <span class="date-main">@code.SeenAt.Value.ToString("dd.MM.yyyy")</span>
+                                                                        <span class="date-time">@code.SeenAt.Value.ToString("HH:mm")</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <text>—</text>
+                                                                    }
+                                                                </span>
+                                                            </td>
+
+                                                            <td class="note-column">
+                                                                <div class="note-control-row">
+                                                                    <input type="text"
+                                                                           class="form-control form-control-sm note-input"
+                                                                           data-region-code-id="@code.RegionCodeId"
+                                                                           value="@code.Note"
+                                                                           disabled="@(!code.IsSeen)" />
+
+                                                                    <button type="button"
+                                                                            class="btn btn-sm save-note-button"
+                                                                            data-region-code-id="@code.RegionCodeId"
+                                                                            disabled="@(!code.IsSeen)">
+                                                                        Сохранить
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/js/my-regions.js" asp-append-version="true"></script>
+}

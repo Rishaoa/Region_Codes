@@ -1,0 +1,66 @@
+﻿@page
+@model IndexModel
+
+@{
+    ViewData["Title"] = "Главная";
+
+    string? username = HttpContext.Session.GetString("Username");
+    bool isLoggedIn = !string.IsNullOrWhiteSpace(username);
+}
+
+<div class="container mt-5">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <h1 class="display-5 fw-bold mb-3">
+                Коллекция автомобильных кодов регионов
+            </h1>
+
+            <p class="lead">
+                Отмечайте автомобильные коды регионов, которые вы увидели на номерах машин,
+                следите за прогрессом и собирайте личную коллекцию.
+            </p>
+
+            <p class="text-muted">
+                Например, если вы увидели номер с кодом <strong>77</strong>,
+                приложение определит, что этот код относится к Москве.
+                Позже можно будет отдельно отметить другие коды этого региона:
+                <strong>97</strong>, <strong>99</strong>, <strong>177</strong> и другие.
+            </p>
+
+            <div class="mt-4">
+                <a class="btn btn-primary btn-lg me-2" href="/Regions">
+                    Открыть справочник
+                </a>
+
+                @if (isLoggedIn)
+                {
+                    <a class="btn btn-success btn-lg" href="/MyRegions">
+                        Моя таблица
+                    </a>
+                }
+                else
+                {
+                    <a class="btn btn-outline-primary btn-lg" href="/Account/Login">
+                        Войти и открыть мою таблицу
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-5 mt-4 mt-lg-0">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Как работает приложение?</h5>
+
+                    <ul class="mb-0">
+                        <li>Вы видите автомобильный номер.</li>
+                        <li>Запоминаете код региона.</li>
+                        <li>Открываете сайт.</li>
+                        <li>Отмечаете конкретный код.</li>
+                        <li>Следите за прогрессом коллекции.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
