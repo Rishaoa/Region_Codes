@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using RegionCodeCollector.Data;
-using DotNetEnv;
-
-Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,11 +14,14 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString =
+builder.Configuration.GetConnectionString("DefaultConnection");
+
+Console.WriteLine(connectionString);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+options.UseMySql(connectionString,
+ServerVersion.AutoDetect(connectionString)));
 
 var app = builder.Build();
 
